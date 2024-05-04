@@ -6,6 +6,12 @@
     <style>
         .bar {
             fill: steelblue;
+            stroke: none; /* No border by default */
+        }
+        .bar:hover {
+            fill: lightsteelblue; /* Lighter color on hover */
+            stroke: orange; /* Orange border on hover */
+            stroke-width: 2px; /* Border width on hover */
         }
         .axis text {
             font: 10px sans-serif; /* This changes the font of the labels */
@@ -19,6 +25,18 @@
         .row-bg {
             fill: none;
             stroke: lightgray;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 120px;
+            height: 28px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -48,6 +66,11 @@
             yAxis = d3.axisLeft(y);
 
         var data;
+
+        // Define the div for the tooltip
+        var div = d3.select("body").append("div")   
+            .attr("class", "tooltip")               
+            .style("opacity", 0);
 
         // Load the CSV file from the same folder
         d3.csv("TestGantt.csv").then(function(contents) {
@@ -129,6 +152,20 @@
                 .on("click", function(d) {
                     data = data.filter(function(e) { return e.id !== d.id; });
                     drawChart(data, filter);
+                    div.style("opacity", 0); // Hide the tooltip when a bar is clicked
+                })
+                .on("mouseover", function(d) {      
+                    div.transition()        
+                        .duration(200)      
+                        .style("opacity", .9);      
+                    div.html(d.id + "<br/>"  + d.name)  
+                        .style("left", (d3.event.pageX) + "px")     
+                        .style("top", (d3.event.pageY - 28) + "px");    
+                    })                  
+                .on("mouseout", function(d) {       
+                    div.transition()        
+                        .duration(500)      
+                        .style("opacity", 0);   
                 });
         }
 
