@@ -19,8 +19,7 @@
         .axis path,
         .axis line {
             fill: none;
-            stroke: #000;
-            shape-rendering: crispEdges; /* This makes the axis lines sharper */
+            stroke: none; /* Remove axis lines */
         }
         .row-bg {
             fill: none;
@@ -38,14 +37,19 @@
             border-radius: 8px;
             pointer-events: none;
         }
+        .button-container {
+            text-align: center; /* Center the buttons */
+        }
     </style>
 </head>
 <body>
-    <button onclick="filter('Day')">Day</button>
-    <button onclick="filter('3 Day')">3 Day</button>
-    <button onclick="filter('Week')">Week</button>
-    <button onclick="filter('Month')">Month</button>
-    <button onclick="filter('All')">All</button>
+    <div class="button-container">
+        <button onclick="filter('Day')">Day</button>
+        <button onclick="filter('3 Day')">3 Day</button>
+        <button onclick="filter('Week')">Week</button>
+        <button onclick="filter('Month')">Month</button>
+        <button onclick="filter('All')">All</button>
+    </div>
     <svg id="chart"></svg>
 
     <script>
@@ -62,10 +66,13 @@
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        var xAxis = d3.axisBottom(x), // This formats the x-axis labels as day of the week and day of the month
-            yAxis = d3.axisLeft(y);
+        var xAxis = d3.axisBottom(x).tickSize(0), // This formats the x-axis labels as day of the week and day of the month
+            yAxis = d3.axisLeft(y).tickSize(0);
 
         var data;
+
+        // Define a color scale
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
 
         // Define the div for the tooltip
         var div = d3.select("body").append("div")   
@@ -149,6 +156,7 @@
                 .attr("width", function(d) { return x(d.end) - x(d.start); })
                 .attr("height", y.bandwidth())
                 .attr("rx", 5) // This makes the bars more rounded
+                .attr("fill", function(d) { return color(d.name); }) // Use the color scale
                 .on("click", function(d) {
                     data = data.filter(function(e) { return e.id !== d.id; });
                     drawChart(data, filter);
