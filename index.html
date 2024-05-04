@@ -28,7 +28,6 @@
     <button onclick="filter('Week')">Week</button>
     <button onclick="filter('Month')">Month</button>
     <button onclick="filter('All')">All</button>
-    <input type="file" id="csvFile" accept=".csv" />
     <svg id="chart"></svg>
 
     <script>
@@ -50,24 +49,19 @@
 
         var data;
 
-        document.getElementById('csvFile').addEventListener('change', function(evt) {
-            var file = evt.target.files[0];
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var contents = e.target.result;
-                data = d3.csvParse(contents, function(d) {
-                    return {
-                        id: d['Event ID'] + '-' + d['Item SKU'],
-                        name: d['Item SKU'],
-                        start: new Date(d['Start Date']),
-                        end: new Date(d['End Date'])
-                    };
-                });
+        // Load the CSV file from the same folder
+        d3.csv("TestGantt.csv").then(function(contents) {
+            data = contents.map(function(d) {
+                return {
+                    id: d['Event ID'] + '-' + d['Item SKU'],
+                    name: d['Item SKU'],
+                    start: new Date(d['Start Date']),
+                    end: new Date(d['End Date'])
+                };
+            });
 
-                drawChart(data, 'All');
-            };
-            reader.readAsText(file);
-        }, false);
+            drawChart(data, 'All');
+        });
 
         function drawChart(data, filter) {
             svg.selectAll("*").remove();
