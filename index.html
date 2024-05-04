@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Gantt Chart</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+        .axis text {
+            font: 10px sans-serif; /* This changes the font of the labels */
+        }
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges; /* This makes the axis lines sharper */
+        }
+        .row-bg {
+            fill: none;
+            stroke: lightgray;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="filter('Day')">Day</button>
+    <button onclick="filter('3 Day')">3 Day</button>
+    <button onclick="filter('Week')">Week</button>
+    <button onclick="filter('Month')">Month</button>
+    <button onclick="filter('All')">All</button>
+    <input type="file" id="csvFile" accept=".csv" />
+    <svg id="chart"></svg>
+
+    <script>
+        var margin = {top: 20, right: 20, bottom: 30, left: 100},
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        var x = d3.scaleBand().range([0, width]), // Change this to a band scale
+            y = d3.scaleBand().range([height, 0]).padding(0.1);
+
+        var svg = d3.select("#chart")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var xAxis = d3.axisBottom(x), // This formats the x-axis labels as day of the week and day of the month
+            yAxis = d3.axisLeft(y);
+
+        var data;
+
+        document.getElementById('csvFile').addEventListener('change', function(evt) {
+            var file = evt.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var contents = e.target.result;
+                data = d3.csvParse(contents, function(d) {
+                    return {
+                        id: d['Event ID'] + '-' + d['Item SKU'],
+                        name: d['Item SKU'],
+                        start: new Date(d['Start Date']),
+                        end: new Date(d['End Date'])
+                    };
+                });
+
+                drawChart(data, 'All');
+            };
+            reader.readAsText(file);
+        }, false);
+
+        function drawChart(data, filter) {
+            svg.selectAll("*").remove();
+
+            var timeRange = d3.extent(data, function(d) { return d.start; });
+            var everyDay = d3.timeDays(timeRange[0], d3.timeDay.offset(timeRange[1], 1));
+
+            if (filter !== 'All') {
+                var endDate = d3.timeDay.offset(timeRange[1], 1);
+                var startDate;
+                switch (filter) {
+                    case 'Day':
+                        startDate = d3.timeDay.offset(endDate, -1);
+                        break;
+                    case '3 Day':
+                        startDate = d3.timeDay.offset(endDate, -3);
+                        break;
+                    case 'Week':
+                        startDate = d3.timeDay.offset(endDate, -7);
+                        break;
+                    case 'Month':
+                        startDate = d3.timeMonth.offset(endDate, -1);
+                        break;
+                }
+                everyDay = everyDay.filter(function(d) { return d >= startDate && d < endDate; });
+            }
+
+            x.domain(everyDay); // Set the domain to every day within the time range
+
+            y.domain(data.map(function(d) { return d.id; }));
+
+            if (filter === 'All' || filter === 'Month') {
+                xAxis.tickFormat(d3.timeFormat("%d")); // Show only the day of the month
+            } else {
+                xAxis.tickFormat(d3.timeFormat("%A %d")); // Show the day of the week and the day of the month
+            }
+
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .call(yAxis);
+
+            // Add alternating background colors to the rows
+            svg.selectAll(".row-bg")
+                .data(everyDay)
+                .enter().append("rect")
+                .attr("class", "row-bg")
+                .attr("x", function(d) { return x(d); })
+                .attr("y", 0)
+                .attr("width", x.bandwidth())
+                .attr("height", height)
+                .attr("fill", function(d, i) { return i % 2 ? "#eee" : "#fff"; }); // Change these colors to suit your needs
+
+            svg.selectAll(".bar")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", function(d) { return x(d.start); })
+                .attr("y", function(d) { return y(d.id); })
+                .attr("width", function(d) { return x(d.end) - x(d.start); })
+                .attr("height", y.bandwidth())
+                .attr("rx", 5) // This makes the bars more rounded
+                .on("click", function(d) {
+                    data = data.filter(function(e) { return e.id !== d.id; });
+                    drawChart(data, filter);
+                });
+        }
+
+        function filter(period) {
+            drawChart(data, period);
+        }
+    </script>
+</body>
+</html>
