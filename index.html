@@ -16,11 +16,6 @@
         .axis text {
             font: 10px sans-serif; /* This changes the font of the labels */
         }
-        .axis path,
-        .axis line {
-            fill: none;
-            stroke: none; /* Remove axis lines */
-        }
         .row-bg {
             fill: none;
             stroke: lightgray;
@@ -131,10 +126,12 @@
 
             svg.append("g")
                 .attr("transform", "translate(0," + height + ")")
-                .call(xAxis);
+                .call(xAxis)
+                .call(g => g.select(".domain").remove()); // Remove the x-axis line
 
             svg.append("g")
-                .call(yAxis);
+                .call(yAxis)
+                .call(g => g.select(".domain").remove()); // Remove the y-axis line
 
             // Add alternating background colors to the rows
             svg.selectAll(".row-bg")
