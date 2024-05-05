@@ -74,19 +74,19 @@
             .attr("class", "tooltip")               
             .style("opacity", 0);
 
-        // Load the CSV file from the same folder
-        d3.csv("TestGantt.csv").then(function(contents) {
-            data = contents.map(function(d) {
-                return {
-                    id: d['Event ID'] + '-' + d['Item SKU'],
-                    name: d['Item SKU'],
-                    start: new Date(d['Start Date']),
-                    end: new Date(d['End Date'])
-                };
-            });
+       // Load the CSV file from Google Sheets
+d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vT4-N90ix_krBo8W3AAdcmUfGizjpBKNMQXhHSOKpEg3kZngWgz1F57nl5gXRAPHiK-MUMPTHH55ehS/pub?output=csv").then(function(contents) {
+    data = contents.map(function(d) {
+        return {
+            id: d['Event ID'] + '-' + d['Item SKU'],
+            name: d['Item SKU'],
+            start: new Date(d['Start Date']),
+            end: new Date(d['End Date'])
+        };
+    });
 
-            drawChart(data, 'All');
-        });
+    drawChart(data, 'All');
+});
 
         function drawChart(data, filter) {
             svg.selectAll("*").remove();
